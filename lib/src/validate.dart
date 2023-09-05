@@ -26,7 +26,14 @@ class ValidationState {
   int maxDepth;
   int maxErrors;
 
-  ValidationState({required this.root, this.maxDepth = 0, this.maxErrors = 0});
+  void Function(Json schema, dynamic instance, List<List<String>> schemaPath)?
+      onMetadata;
+
+  ValidationState(
+      {required this.root,
+      this.maxDepth = 0,
+      this.maxErrors = 0,
+      this.onMetadata});
 
   List<Map<String, dynamic>> errorList() {
     List<Map<String, dynamic>> err = [];
@@ -85,13 +92,19 @@ class ValidationState {
 /// [schema] The schema to validate data against
 /// [data] The "input" to validate
 /// [maxDepth] How deep to recurse. Optional.
+/// [onMetadata] Callback for metadata forms on a type form. Optional.
 ValidationErrors validate(
     {required Json schema,
     required dynamic data,
     int maxDepth = 0,
-    int maxErrors = 0}) {
-  ValidationState state =
-      ValidationState(root: schema, maxDepth: maxDepth, maxErrors: maxErrors);
+    int maxErrors = 0,
+    void Function(Json schema, dynamic instance, List<List<String>> schemaPath)?
+        onMetadata}) {
+  ValidationState state = ValidationState(
+      root: schema,
+      maxDepth: maxDepth,
+      maxErrors: maxErrors,
+      onMetadata: onMetadata);
   try {
     validateWithState(state: state, schema: schema, instance: data);
   } catch (e) {
@@ -123,6 +136,7 @@ void validateWithState(
     state.schemaTokens.removeLast();
   } else if (hasType(schema)) {
     state.pushSchemaToken("type");
+    var errorCount = state.errors.length;
     switch (schema["type"]) {
       case 'boolean':
         if (instance is! bool) {
@@ -169,6 +183,12 @@ void validateWithState(
         break;
     }
     state.popSchemaToken();
+    // only checking metadata if there is a type, and there were no errors in type
+    if (hasMetadata(schema) &&
+        errorCount == state.errors.length &&
+        state.onMetadata != null) {
+      state.onMetadata!(schema, instance, state.schemaTokens);
+    }
   } else if (hasEnum(schema)) {
     state.pushSchemaToken("enum");
 

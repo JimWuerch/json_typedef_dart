@@ -118,6 +118,8 @@ bool isEmpty(Json schema) => schema.isEmpty;
 
 bool hasType(Json schema) => schema.containsKey("type");
 
+bool hasMetadata(Json schema) => schema.containsKey("metadata");
+
 bool hasElements(Json schema) => schema.containsKey("elements");
 
 bool hasEnum(Json schema) => schema.containsKey("enum");

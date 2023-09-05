@@ -192,4 +192,69 @@ void main() {
 }
 ```
 
+## Advanced Usage: Using `metadata` form to validate instance data
+
+The `metadata` form can be used to invoke a callback when used with `type` forms to do additional validation on a data instance.
+
+The callback receives the entire schema that contains the metadata tag, and the instance.
+
+In the example below, when called on the `name` tag, the callback schema will contain:
+```dart
+{
+   "type": "string", 
+   "metadata": {"max-length":10, "min-length":3}
+}
+```
+The callback will be called after validating the data type against the schema.
+
+```dart
+import 'package:json_typedef_dart/json_typedef_dart.dart';
+
+Json schema = <String, dynamic>{
+   "properties": {
+      "name": {"type": "string", "metadata": {"max-length":10, "min-length":3}},
+      "age": {"type": "uint32", "metadata": {"max":130}},
+      "phones": {
+         "elements": {"type": "string", "metadata":"phone":""}
+      }
+   }
+};
+
+void validateData(Map<String, dynamic> schema, dynamic instance) {
+   Map<String, dynamic> metadata = schema["metadata"];
+   for (var entry in metadata.entries) {
+      switch(entry.key) {
+         case "max-length":
+            if (instance !is String || instance.length > entry.value) {
+               // there's an error, so something
+            }
+         case "min-length":
+            if (instance !is String || instance.length < entry.value) {
+            // there's an error, so something
+            }
+         case "max":
+            if (instance !is num || instance > entry.value) {
+               // error
+            }
+         case "phone":
+            // do some sort of phone number validation
+         default:
+      }
+   }
+}
+
+void main() {
+// validate returns an array of validation errors. If there were no problems
+// with the input, it returns an empty array.
+
+// Outputs: []
+   print(validate(schema: schema, data: {
+      "name": "John Doe",
+              "age": 43,
+              "phones": ["+44 1234567", "+44 2345678"]
+      }, validateData)
+   );
+}
+```
+
 [jtd]: https://jsontypedef.com
