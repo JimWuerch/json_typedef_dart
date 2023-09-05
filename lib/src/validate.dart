@@ -26,7 +26,7 @@ class ValidationState {
   int maxDepth;
   int maxErrors;
 
-  void Function(Json schema, dynamic instance, List<List<String>> schemaPath)?
+  bool Function(Json schema, dynamic instance, List<List<String>> schemaPath)?
       onMetadata;
 
   ValidationState(
@@ -98,7 +98,7 @@ ValidationErrors validate(
     required dynamic data,
     int maxDepth = 0,
     int maxErrors = 0,
-    void Function(Json schema, dynamic instance, List<List<String>> schemaPath)?
+    bool Function(Json schema, dynamic instance, List<List<String>> schemaPath)?
         onMetadata}) {
   ValidationState state = ValidationState(
       root: schema,
@@ -187,7 +187,11 @@ void validateWithState(
     if (hasMetadata(schema) &&
         errorCount == state.errors.length &&
         state.onMetadata != null) {
-      state.onMetadata!(schema, instance, state.schemaTokens);
+      state.pushSchemaToken("metadata");
+      if (!state.onMetadata!(schema, instance, state.schemaTokens)) {
+        state.pushError();
+      }
+      state.popSchemaToken();
     }
   } else if (hasEnum(schema)) {
     state.pushSchemaToken("enum");
