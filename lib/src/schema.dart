@@ -6,40 +6,35 @@ const FormsMap _validForms = {
 
   SchemaType.emptyForm: [
     {
-      [false, false, false, false, false, false, false, false, false, false]:
-          validateDefinitions
+      [false, false, false, false, false, false, false, false, false, false]: validateDefinitions
     }
   ],
   // Ref form
 
   SchemaType.refForm: [
     {
-      [true, false, false, false, false, false, false, false, false, false]:
-          isValidRefForm
+      [true, false, false, false, false, false, false, false, false, false]: isValidRefForm
     }
   ],
   // Type form
 
   SchemaType.typeForm: [
     {
-      [false, true, false, false, false, false, false, false, false, false]:
-          isValidTypeForm
+      [false, true, false, false, false, false, false, false, false, false]: isValidTypeForm
     }
   ],
   // Enum form
 
   SchemaType.enumForm: [
     {
-      [false, false, true, false, false, false, false, false, false, false]:
-          isValidEnumForm
+      [false, false, true, false, false, false, false, false, false, false]: isValidEnumForm
     }
   ],
   // Elements form
 
   SchemaType.elementsForm: [
     {
-      [false, false, false, true, false, false, false, false, false, false]:
-          isValidElementsForm
+      [false, false, false, true, false, false, false, false, false, false]: isValidElementsForm
     }
   ],
   // Properties form -- properties or optional properties or both, and never
@@ -47,44 +42,36 @@ const FormsMap _validForms = {
 
   SchemaType.propertiesForm: [
     {
-      [false, false, false, false, true, false, false, false, false, false]:
-          isValidPropertiesForm
+      [false, false, false, false, true, false, false, false, false, false]: isValidPropertiesForm
     },
     {
-      [false, false, false, false, false, true, false, false, false, false]:
-          isValidPropertiesForm
+      [false, false, false, false, false, true, false, false, false, false]: isValidPropertiesForm
     },
     {
-      [false, false, false, false, true, true, false, false, false, false]:
-          isValidPropertiesForm
+      [false, false, false, false, true, true, false, false, false, false]: isValidPropertiesForm
     },
     {
-      [false, false, false, false, true, false, true, false, false, false]:
-          isValidPropertiesForm
+      [false, false, false, false, true, false, true, false, false, false]: isValidPropertiesForm
     },
     {
-      [false, false, false, false, false, true, true, false, false, false]:
-          isValidPropertiesForm
+      [false, false, false, false, false, true, true, false, false, false]: isValidPropertiesForm
     },
     {
-      [false, false, false, false, true, true, true, false, false, false]:
-          isValidPropertiesForm
+      [false, false, false, false, true, true, true, false, false, false]: isValidPropertiesForm
     },
   ],
   // Values form
 
   SchemaType.valuesForm: [
     {
-      [false, false, false, false, false, false, false, true, false, false]:
-          isValidValuesForm
+      [false, false, false, false, false, false, false, true, false, false]: isValidValuesForm
     }
   ],
   // Discriminator form
 
   SchemaType.discriminatorForm: [
     {
-      [false, false, false, false, false, false, false, false, true, true]:
-          isValidDiscriminatorForm
+      [false, false, false, false, false, false, false, false, true, true]: isValidDiscriminatorForm
     }
   ]
 };
@@ -136,14 +123,11 @@ bool hasDiscriminator(Json schema) => schema.containsKey("discriminator");
 
 bool hasMapping(Json schema) => schema.containsKey("mapping");
 
-bool hasOptionalProperties(Json schema) =>
-    schema.containsKey("optionalProperties");
+bool hasOptionalProperties(Json schema) => schema.containsKey("optionalProperties");
 
-bool hasAdditionalProperties(Json schema) =>
-    schema.containsKey("additionalProperties");
+bool hasAdditionalProperties(Json schema) => schema.containsKey("additionalProperties");
 
-bool isValidTypeForm(Json schema, Json root) =>
-    (schema["type"] is String) && (validTypes.contains(schema["type"]));
+bool isValidTypeForm(Json schema, Json root) => (schema["type"] is String) && (validTypes.contains(schema["type"]));
 
 bool isValidEnumForm(Json schema, Json root) {
   if ((schema["enum"] is! List)) {
@@ -152,11 +136,10 @@ bool isValidEnumForm(Json schema, Json root) {
   if ((schema["enum"] as List).isEmpty) {
     return false;
   }
-  if ((schema["enum"] as List).length !=
-      Set<dynamic>.from(schema["enum"] as List).length) {
+  if ((schema["enum"] as List).length != Set<dynamic>.from(schema["enum"] as List).length) {
     return false;
   }
-  for (var enum_ in schema["enum"]) {
+  for (var enum_ in schema["enum"] as List) {
     if (enum_ is! String) {
       return false;
     }
@@ -174,16 +157,14 @@ bool isValidElementsForm(Json schema, Json root) {
   return true;
 }
 
-bool isProperties(Json schema) =>
-    schema.containsKey("properties") ||
-    schema.containsKey("optionalProperties");
+bool isProperties(Json schema) => schema.containsKey("properties") || schema.containsKey("optionalProperties");
 
 bool isValidProperties(Json schema, Json root) {
   if (schema['properties'] is! Json && schema["optionalProperties"] is! Json) {
     return false;
   }
   if (schema['properties'] is Json) {
-    for (var subSchema in schema["properties"].values) {
+    for (var subSchema in (schema["properties"] as Json).values) {
       if (subSchema is! Json) {
         return false;
       }
@@ -191,17 +172,19 @@ bool isValidProperties(Json schema, Json root) {
         return false;
       }
     }
-    for (var key in schema["properties"].keys) {
+    for (var key in (schema["properties"] as Json).keys) {
       if (schema["optionalProperties"] is Json) {
-        if ((Map<String, dynamic>.from(schema["optionalProperties"] as Json))
-            .containsKey(key)) {
+        if ((Map<String, dynamic>.from(schema["optionalProperties"] as Json)).containsKey(key)) {
           return false;
         }
       }
     }
   }
   if (hasOptionalProperties(schema)) {
-    for (Json subSchema in schema["optionalProperties"].values) {
+    for (var subSchema in (schema["optionalProperties"] as Json).values) {
+      if (subSchema is! Json) {
+        return false;
+      }
       if (!isValidSchema(subSchema, root)) {
         return false;
       }
@@ -210,8 +193,7 @@ bool isValidProperties(Json schema, Json root) {
   return true;
 }
 
-bool validateProperties(Json schema, Json root) =>
-    isProperties(schema) ? isValidProperties(schema, root) : true;
+bool validateProperties(Json schema, Json root) => isProperties(schema) ? isValidProperties(schema, root) : true;
 
 bool isValidValuesForm(Json schema, Json root) {
   if (schema["values"] is! Json) {
@@ -231,7 +213,7 @@ bool isValidDiscriminatorForm(Json schema, Json root) {
     return false;
   }
 
-  for (var subSchema in schema["mapping"].values) {
+  for (var subSchema in (schema["mapping"] as Json).values) {
     if (subSchema["nullable"] == true) {
       return false;
     }
@@ -240,14 +222,11 @@ bool isValidDiscriminatorForm(Json schema, Json root) {
       return false;
     }
 
-    if (subSchema["properties"] is Json &&
-        (subSchema["properties"] as Json)
-            .containsKey(schema["discriminator"])) {
+    if (subSchema["properties"] is Json && (subSchema["properties"] as Json).containsKey(schema["discriminator"])) {
       return false;
     }
     if (hasOptionalProperties(subSchema)) {
-      if ((subSchema["optionalProperties"] as Json)
-          .containsKey(schema["discriminator"])) {
+      if ((subSchema["optionalProperties"] as Json).containsKey(schema["discriminator"])) {
         return false;
       }
     }
@@ -262,7 +241,7 @@ bool isValidDefinitions(Json schema, Json root) {
   if (schema["definitions"] is! Json) {
     return false;
   }
-  for (var subSchema in schema['definitions'].values) {
+  for (var subSchema in (schema['definitions'] as Json).values) {
     if (subSchema is! Json) {
       return false;
     }
@@ -274,16 +253,12 @@ bool isValidDefinitions(Json schema, Json root) {
   return true;
 }
 
-bool validateDefinitions(Json schema, Json root) =>
-    hasDefinitions(schema) ? isValidDefinitions(schema, root) : true;
+bool validateDefinitions(Json schema, Json root) => hasDefinitions(schema) ? isValidDefinitions(schema, root) : true;
 
-bool isValidAdditionalProperties(Json schema) =>
-    schema["additionalProperties"] is bool;
+bool isValidAdditionalProperties(Json schema) => schema["additionalProperties"] is bool;
 
 bool validateAdditionalProperties(Json schema) =>
-    hasAdditionalProperties(schema)
-        ? isValidAdditionalProperties(schema)
-        : true;
+    hasAdditionalProperties(schema) ? isValidAdditionalProperties(schema) : true;
 
 bool isValidPropertiesForm(Json schema, Json root) {
   if (!validateDefinitions(schema, root)) {
@@ -340,8 +315,7 @@ bool _isValidSchemaForm(Json schema, Json root) {
   for (var validForm in _validForms.entries) {
     for (var formSignatures in validForm.value) {
       for (var form in formSignatures.entries) {
-        if (const ListEquality<bool>().equals(form.key, formSignature) ==
-            true) {
+        if (const ListEquality<bool>().equals(form.key, formSignature) == true) {
           return form.value(schema, root);
         }
       }
